@@ -971,6 +971,14 @@ class LUT(object):
     def transect2D(self, *args, **kwargs):
         transect2D(self, *args, **kwargs)
         return self
+    
+    def rename_axis(self, ax1, ax2):
+        if self.names is None:
+            raise Exception("Requested rename_axis on a LUT that has no named axes")
+        else:
+            self.names = [ax2 if x == ax1 else x for x in self.names]
+
+        return self
 
 
 def Idx(value, name=None, round=False, fill_value=None):
@@ -2167,6 +2175,21 @@ class MLUT(object):
         display(VBox(wid))
         update()
 
+    def rename_axis(self, ax1, ax2):
+        '''
+        Rename axis ax1 to ax2 (in place)
+        '''
+        # modify axes
+        self.axes = OrderedDict(((ax2 if k == ax1 else k, v) for k, v in self.axes.items()))
+
+        # modify data
+        self.data = [(name,
+                      array,
+                      None if axnames is None else [ax2 if x == ax1 else x for x in axnames],
+                      attributes)
+                     for (name, array, axnames, attributes) in self.data]
+
+        return self
 
 
 def read_mlut(filename, fmt=None):

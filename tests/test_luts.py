@@ -3,9 +3,11 @@
 
 
 from __future__ import print_function, division
+import sys
+sys.path.append('../..')
 from nose.tools import raises
 import numpy as np
-from .luts import LUT, MLUT, read_mlut, read_mlut_hdf, merge, Idx
+from luts.luts import LUT, MLUT, read_mlut, read_mlut_hdf, merge, Idx
 import itertools
 import os
 import warnings
@@ -491,3 +493,14 @@ def test_lut_string():
 def test_rm_lut():
     m = create_mlut()
     m.rm_lut('data1')
+
+def test_rename_lut():
+    l = create_lut()
+    l.describe()
+    l.rename_axis('z', 'zz')
+    l.describe()
+
+def test_rename_mlut():
+    m = create_mlut()
+    m.rename_axis('a', 'aa')
+    m.rename_axis('b', 'bb').rename_axis('c', 'cc')
