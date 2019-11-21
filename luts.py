@@ -18,11 +18,13 @@ from __future__ import print_function, division, absolute_import
 import sys
 import numpy as np
 from scipy.interpolate import interp1d
+import xarray as xr
 from os.path import exists
 from os import remove
 from collections import OrderedDict
 from numpy.ma import filled
 import warnings
+import itertools
 if sys.version_info[:2] >= (3, 0): # python2/3 compatibility
     unicode = str
     xrange = range
@@ -980,6 +982,20 @@ class LUT(object):
 
         return self
 
+    def to_xarray(self):
+        """
+        Convert LUT to `xr.DataArray`
+        """
+        idim = itertools.count()
+        da = xr.DataArray(
+            self.data,
+            dims=[x
+                  if x is not None
+                  else f'dim_{next(idim)}'
+                  for x in self.names]
+            )
+        da.attrs = self.attrs
+        return da
 
 def Idx(value, name=None, round=False, fill_value=None):
     '''
@@ -2191,6 +2207,26 @@ class MLUT(object):
 
         return self
 
+    def to_xarray(self):
+        """
+        Convert LUT to `xr.Dataset`
+        """
+        ds = xr.Dataset()
+
+        idim = itertools.count()
+
+        for (name, array, axnames, attributes) in self.data:
+            ds[name] = xr.DataArray(
+                array,
+                dims=[x if x is not None else f'dim_{next(idim)}' for x in axnames],
+            )
+            ds[name].attrs = attributes
+        
+        ds = ds.assign_coords(**self.axes)
+        ds.attrs = self.attrs
+
+        return ds
+
 
 def read_mlut(filename, fmt=None):
     '''
@@ -2412,6 +2448,36 @@ def read_mlut_hdf(filename, datasets=None):
         m.set_attr(k, v)
 
     return m
+
+def from_xarray(A):
+    """
+    Convert xarray object `A` (`Dataset` or `DataArray`) to MLUT or LUT.
+    """
+    if isinstance(A, xr.Dataset):
+        m = MLUT()
+
+        for x in A:
+            m.add_dataset(
+                x,
+                A[x].data,
+                A[x].dims,
+                attrs=A[x].attrs)
+        
+        for x in A.coords:
+            m.add_axis(x, A.coords[x].data)
+
+        return m
+
+    elif isinstance(A, xr.DataArray):
+        return LUT(
+            A.data,
+            axes=[A.coords[x].data for x in A.dims],
+            names=A.dims,
+            desc=A.name,
+            attrs=A.attrs)
+
+    else:
+        raise Exception(f'Invalid class passed to `from_xarray` ({A.__class__})')
 
 
 
