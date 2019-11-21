@@ -2,16 +2,15 @@
 # -*- coding: utf-8 -*-
 
 
-from __future__ import print_function, division
-import sys
-sys.path.append('../..')
-from nose.tools import raises
-import numpy as np
-from luts.luts import LUT, MLUT, read_mlut, read_mlut_hdf, merge, Idx
-import itertools
 import os
+import tempfile
 import warnings
-from tempfile import NamedTemporaryFile
+
+import numpy as np
+import pytest
+
+from luts import LUT, MLUT, Idx, merge, read_mlut, read_mlut_hdf
+
 
 def create_mlut():
     np.random.seed(0)
@@ -44,83 +43,79 @@ def test_scalar():
 
     m.describe()
     for fmt in ['hdf4', 'netcdf4']:
-        with NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile() as f:
             m.save(f.name, overwrite=True, verbose=True, fmt=fmt)
             assert m.equal(read_mlut(f.name, fmt=fmt), show_diff=True)
 
 
-@raises(Exception)
 def test_mlut_index1():
     m = create_mlut()
-    m['data4']
+    with pytest.raises(Exception):
+        m['data4']
 
 def test_mlut_index2():
     m = create_mlut()
     m['data1']
 
-def test_lut_oper1():
+
+@pytest.mark.parametrize('fn,result', [
+    (lambda x, y: x+y, 9.),
+    (lambda x, y: x-y, 5.),
+    (lambda x, y: y-x, -5.),
+    (lambda x, y: x*y, 14.),
+    (lambda x, y: x/y, 3.5),
+])
+def test_lut_oper1(fn, result):
     '''
     test operations on LUTs
     '''
-    def check(fn, result):
-        m0 = create_mlut()
-        m0.set_attr('z', 5)
-        m1 = create_mlut()
-        m1['data1'].data[:] = 2
+    m0 = create_mlut()
+    m0.set_attr('z', 5)
+    m1 = create_mlut()
+    m1['data1'].data[:] = 2
 
-        # check that same result is obtained through LUT and array operations
-        for i in ['data1', 'data2', 'data3']:
-            res = fn(m0[i], m1[i])
-            assert np.allclose(res.data, fn(m0[i].data, m1[i].data))
-            assert 'x' not in res.attrs
+    # check that same result is obtained through LUT and array operations
+    for i in ['data1', 'data2', 'data3']:
+        res = fn(m0[i], m1[i])
+        assert np.allclose(res.data, fn(m0[i].data, m1[i].data))
+        assert 'x' not in res.attrs
 
-            if i == 'data1':
-                assert res[1,1] == result
-
-    for (op, res) in [
-            (lambda x, y: x+y, 9.),
-            (lambda x, y: x-y, 5.),
-            (lambda x, y: y-x, -5.),
-            (lambda x, y: x*y, 14.),
-            (lambda x, y: x/y, 3.5),
-            ]:
-        yield check, op, res
+        if i == 'data1':
+            assert res[1,1] == result
 
 
-@raises(ValueError)
 def test_lut_oper2():
     '''
     LUT operation between LUTs with incompatible shapes
     '''
     L0 = LUT(np.arange(5))
     L1 = LUT(np.arange(10))
-    L0 + L1
+    with pytest.raises(ValueError):
+        L0 + L1
 
 
-def test_lut_oper3():
+@pytest.mark.parametrize('op,res', [
+    (lambda x: x+2, 9.),
+    (lambda x: 2+x, 9.),
+    (lambda x: x-2, 5.),
+    (lambda x: 2-x, -5.),
+    (lambda x: x*2, 14.),
+    (lambda x: 2*x, 14.),
+    (lambda x: x/2, 3.5),
+    (lambda x: 2./(x+1), 0.25),
+])
+def test_lut_oper3(op, res):
     '''
     Scalar operations between LUTs
     '''
-    def check_operations3(fn, result):
-        m0 = create_mlut()
+    m0 = create_mlut()
 
-        # operate on the LUT
-        assert fn(m0['data1'])[1,1] == res
+    # operate on the LUT
+    assert op(m0['data1'])[1, 1] == res
 
-        # operate on the array
-        assert fn(m0['data1'][1,1]) == res
+    # operate on the array
+    assert op(m0['data1'][1, 1]) == res
 
-    for (op, res) in [
-            (lambda x: x+2, 9.),
-            (lambda x: 2+x, 9.),
-            (lambda x: x-2, 5.),
-            (lambda x: 2-x, -5.),
-            (lambda x: x*2, 14.),
-            (lambda x: 2*x, 14.),
-            (lambda x: x/2, 3.5),
-            (lambda x: 2./(x+1), 0.25),
-            ]:
-        yield check_operations3, op, res
 
 def test_broadcasting1():
     # "broadcasting" operations between LUTs
@@ -132,10 +127,10 @@ def test_broadcasting1():
 
 def test_broadcasting2():
     l = create_lut()
-    z = l.sub()[:,0]
-    p = l.sub()[0,:]
+    z = l.sub()[:, 0]
+    p = l.sub()[0, :]
     (z + p).print_info()
-    assert (z+p)[4,5] == z[4] + p[5]
+    assert (z+p)[4, 5] == z[4] + p[5]
 
 def test_sub():
     l = create_lut()
@@ -186,11 +181,11 @@ def test_sub5():
 def test_sub6():
     LUT(np.eye(4)).sub()[:,:].describe()
 
-@raises(ValueError)
 def test_broadcasting3():
     l1 = LUT(np.eye(3), axes=[None, None], names=['a', 'b'])
     l2 = LUT(np.eye(3), axes=[None, None], names=['b', 'a'])
-    l1+l2
+    with pytest.raises(ValueError):
+        l1+l2
 
 def test_dimensions():
     l2 = LUT(np.zeros((2, 3, 4, 5)),
@@ -230,35 +225,31 @@ def test_indexing():
             assert np.allclose(m[d][:,:,:], m[i][:,:,:])
 
 
-def test_indexing1():
+@pytest.mark.parametrize('t0', ['i', 'f', 'imi', 'imf', ':'])
+@pytest.mark.parametrize('t1', ['i', 'f', 'imi', 'imf', ':'])
+@pytest.mark.parametrize('t2', ['i', 'f', 'imi', 'imf', ':'])
+@pytest.mark.parametrize('t3', ['i', 'f', 'imi', 'imf', ':'])
+def test_indexing1(t0, t1, t2, t3):
     '''
     check many indexing methods
     '''
-    def check(i0,i1,i2,i3):
-        inputs = {
-                'i': 0,
-                'f': 0.25,
-                'imf': np.random.random((2,3)),
-                'imi': np.zeros((2,3), dtype='int'),
-                ':': slice(None)
-                }
-        print('indices are "{},{},{},{}"'.format(i0, i1, i2, i3))
-        i0 = inputs[t0]
-        i1 = inputs[t1]
-        i2 = inputs[t2]
-        i3 = inputs[t3]
+    inputs = {
+            'i': 0,
+            'f': 0.25,
+            'imf': np.random.random((2, 3)),
+            'imi': np.zeros((2, 3), dtype='int'),
+            ':': slice(None)
+            }
+    i0 = inputs[t0]
+    i1 = inputs[t1]
+    i2 = inputs[t2]
+    i3 = inputs[t3]
+    print('indices are "{},{},{},{}"'.format(i0, i1, i2, i3))
 
-        D = np.random.randn(8,9,10,11)
-        L = LUT(D)
-        L[i0,i1,i2,i3].shape
+    D = np.random.randn(8,9,10,11)
+    L = LUT(D)
+    L[i0, i1, i2, i3].shape
 
-    for (t0,t1,t2,t3) in itertools.product(
-            ['i', 'f', 'imi', 'imf', ':'],
-            ['i', 'f', 'imi', 'imf', ':'],
-            ['i', 'f', 'imi', 'imf', ':'],
-            ['i', 'f', 'imi', 'imf', ':'],
-            ):
-        yield check, t0, t1, t2, t3
 
 def test_axis():
     m = create_mlut()
@@ -327,13 +318,13 @@ def test_modify_axis():
     m[0].axis(1)[0] = -10
     assert m[0].axis(1)[0] == -10
 
-@raises(ValueError)
 def test_idx1():
-    Idx(2.5).index(np.array([2.]))
+    with pytest.raises(ValueError):
+        Idx(2.5).index(np.array([2.]))
 
-@raises(ValueError)
 def test_idx2():
-    Idx(np.eye(2)).index(np.array([2.]))
+    with pytest.raises(ValueError):
+        Idx(np.eye(2)).index(np.array([2.]))
 
 def test_idx3():
     Idx(2.5).index(np.array([2.5]))
@@ -344,9 +335,9 @@ def test_idx4():
 def test_idx5():
     np.allclose(Idx(np.eye(2)).index(np.linspace(0, 5, 5)), 0.8*np.eye(2))
 
-@raises(ValueError)
 def test_idx6():
-    Idx(np.eye(2)).index(np.linspace(1, 5, 5))
+    with pytest.raises(ValueError):
+        Idx(np.eye(2)).index(np.linspace(1, 5, 5))
 
 def test_idx7():
     r = Idx(np.eye(2), fill_value=np.NaN).index(np.linspace(2, 5, 5))
@@ -400,50 +391,31 @@ def test_lut_apply():
     assert m.desc == 'test'
     assert np.allclose(m.data, np.sqrt(l.data))
 
-def test_write_read_mlut():
 
-    import tempfile
+@pytest.mark.parametrize('filename', ['mlut.hdf', 'mlut.nc'])
+def test_write_read_mlut(filename):
 
-    def check(filename):
-
-        # write a mlut, read it again, should be equal
+    # write a mlut, read it again, should be equal
+    with tempfile.TemporaryDirectory() as tmpdir:
         m0 = create_mlut()
-        tmpdir = tempfile.mkdtemp()
         filename = os.path.join(tmpdir,filename)
-        try:
-            m0.save(filename)
-            m1 = read_mlut(filename)
-        except:
-            raise
-        finally:
-            # always remove that file
-            os.remove(filename)
-            os.rmdir(tmpdir)
+        m0.save(filename)
+        m1 = read_mlut(filename)
 
         assert m0.equal(m1, show_diff=True)
 
-    for filename in ['mlut.hdf', 'mlut.nc']:
-        yield check, filename
 
 
 def test_write_read_mlut2():
     # partial read of mlut
-    import tempfile
     m0 = create_mlut()
     for d in m0.datasets():
-        tmpdir = tempfile.mkdtemp()
-        filename = os.path.join(tmpdir, 'mlut.hdf')
-        try:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            filename = os.path.join(tmpdir, 'mlut.hdf')
             m0.save(filename)
             m1 = read_mlut_hdf(filename, datasets=[d])
-        except:
-            raise
-        finally:
-            # always remove that file
-            os.remove(filename)
-            os.rmdir(tmpdir)
 
-        assert m0[d] == m1[0]
+            assert m0[d] == m1[0]
 
 
 def test_names_axes_without_values():
