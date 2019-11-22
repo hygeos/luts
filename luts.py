@@ -982,22 +982,44 @@ class LUT(object):
 
         return self
 
-    def to_xarray(self):
+    def to_xarray(self, deduplicate={}):
         """
         Convert LUT to `xr.DataArray`
+
+        Arguments:
+        ----------
+
+        deduplicate: dictionary used to rename duplicate dimensions within the LUT
+            ex: {'a': ['a0', 'a1']}
+                rename duplicate dimension 'a' to 'a0', 'a1'
         """
         idim = itertools.count()
+        new_dims = [x
+                    if x is not None
+                    else f'dim_{next(idim)}'
+                    for x in self.names]
+        for d in deduplicate:
+            idedup = itertools.count()
+            new_dims = [x
+                        if x not in deduplicate
+                        else deduplicate[x][next(idedup)]
+                        for x in new_dims]
+
         da = xr.DataArray(
             self.data,
-            dims=[x
-                  if x is not None
-                  else f'dim_{next(idim)}'
-                  for x in self.names]
+            dims=new_dims,
             )
         for i, name in enumerate(self.names):
-            da = da.assign_coords(**{name: self.axes[i]})
+            if (name is None) or (self.axes[i] is None):
+                continue
+            if name in deduplicate:
+                for n in deduplicate[name]:
+                    da = da.assign_coords(**{n: self.axes[i]})
+            else:
+                da = da.assign_coords(**{name: self.axes[i]})
         da.attrs = self.attrs
         return da
+
 
 def Idx(value, name=None, round=False, fill_value=None):
     '''
