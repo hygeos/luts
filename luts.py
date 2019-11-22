@@ -994,6 +994,8 @@ class LUT(object):
                   else f'dim_{next(idim)}'
                   for x in self.names]
             )
+        for i, name in enumerate(self.names):
+            da = da.assign_coords(**{name: self.axes[i]})
         da.attrs = self.attrs
         return da
 
