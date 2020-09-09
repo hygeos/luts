@@ -290,6 +290,10 @@ def test_merge():
     assert m[0].shape == (5, 3, 5, 6)
     assert 'x' in m.attrs
 
+    for l in m:
+        assert not np.isnan(l.data).any()
+
+
 def test_equality():
     m0 = create_mlut()
     m1 = create_mlut()
