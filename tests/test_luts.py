@@ -4,7 +4,6 @@
 
 import os
 import tempfile
-import warnings
 
 import numpy as np
 import pytest
@@ -349,15 +348,15 @@ def test_idx8():
     assert (idx.apply(np.arange(10)+100) >= 100).all()
 
 def test_idx_oob_1():
-    with warnings.catch_warnings(record=True) as w:
+    with pytest.warns(None) as record:
         assert Idx(-1, fill_value='extrema').index(np.arange(10)) == 0.
         assert Idx(100, fill_value='extrema').index(np.arange(10)) == 9.
-        assert len(w) == 0
+        assert len(record) == 0
 
-    with warnings.catch_warnings(record=True) as w:
+    with pytest.warns(None) as record:
         assert Idx(-1, fill_value='extrema,warn').index(np.arange(10)) == 0.
         assert Idx(100, fill_value='extrema,warn').index(np.arange(10)) == 9.
-        assert len(w) == 2
+        assert len(record) == 2
 
 
 
