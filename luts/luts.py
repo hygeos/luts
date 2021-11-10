@@ -2314,16 +2314,20 @@ def read_mlut_netcdf4(filename):
     return m
 
 
-def read_mlut_hdf5(filename, datasets=None, lazy=False, group=None):
+def read_mlut_hdf5(filename, datasets=None, lazy=False, group=None, wrap_data=None):
     '''
     read a MLUT from a hdf5 file (filename)
-    datasets: list of datasets to read:
+    
+    - datasets: list of datasets to read:
         * None (default): read all datasets, including axes as indicated by the
           attribute 'dimensions'
         * a list of:
             - dataset names (string)
             - or a tuple (dataset_name, axes) where axes is a list of
               dimensions (strings), overriding the attribute 'dimensions'
+    - lazy: whether to activate lazy reading (data is returned as hdf object)
+    - wrap_data: a function applied to each data. Can be dask.array.array to
+      return as dask arrays, which is useful for further conversion to xarray Dataset
     '''
     import h5py
 
@@ -2378,6 +2382,10 @@ def read_mlut_hdf5(filename, datasets=None, lazy=False, group=None):
             data = f['data'][dataset]
         else:
             data = f['data'][dataset][...]
+
+        if wrap_data is not None:
+            data = wrap_data(data)
+
         attrs = {}
         if f['data'][dataset].attrs.__contains__('_FillValue'):
             attrs['_FillValue'] = f['data'][dataset].attrs.get('_FillValue')
