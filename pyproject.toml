@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "luts"
-version = "1.0.0"
+version = "1.0.1"
 description = "Multidimensional labeled arrays and datasets in Python, similar to xarray."
 authors = ["François Steinmetz <fs@hygeos.com>"]
 
