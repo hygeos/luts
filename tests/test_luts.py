@@ -479,3 +479,7 @@ def test_rename_mlut():
     m = create_mlut()
     m.rename_axis('a', 'aa')
     m.rename_axis('b', 'bb').rename_axis('c', 'cc')
+
+def test_plot_polar():
+    m = create_mlut()
+    m['data1'].plot_polar()
