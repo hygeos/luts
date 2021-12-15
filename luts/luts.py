@@ -1150,7 +1150,7 @@ class Subsetter(object):
         return self.LUT.sub(dict(enumerate(keys)))
 
 
-def plot_polar(lut, index=None, vmin=None, vmax=None, rect='211', sub='212',
+def plot_polar(lut, index=None, vmin=None, vmax=None, rect=211, sub=212,
                sym=True, swap='auto', fig=None, cmap=None, semi=False):
     '''
     Contour and eventually transect of 2D LUT on a semi polar plot, with
@@ -1164,7 +1164,7 @@ def plot_polar(lut, index=None, vmin=None, vmax=None, rect='211', sub='212',
            if None (default), no transect
     vmin, vmax: range of values
                 default None: determine min/max from values
-    rect: subplot position of the main plot ('111' for example)
+    rect: subplot position of the main plot (111 for example)
     sub: subplot position of the transect
     sym: the transect uses symmetrical axis (boolean)
          if None (default), use symmetry iff axis is 'zenith'
