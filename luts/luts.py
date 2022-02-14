@@ -184,7 +184,7 @@ class LUT(object):
             self.names = names
             assert len(names) == self.ndim
 
-        if self.data.dtype in [np.float, np.float32, np.float64]:
+        if self.data.dtype in [float, np.float32, np.float64]:
             self.formatter = '{:3g}'
         else:
             self.formatter = '{}'
@@ -1320,7 +1320,7 @@ def plot_polar(lut, index=None, vmin=None, vmax=None, rect=211, sub=212,
     # draw colormesh
     #
     if cmap is None:
-        cmap = cm.rainbow
+        cmap = cm.rainbow.copy()
         cmap.set_under('black')
         cmap.set_over('white')
         cmap.set_bad('0.5') # grey 50%
@@ -1355,7 +1355,9 @@ def plot_polar(lut, index=None, vmin=None, vmax=None, rect=211, sub=212,
                 ax_cart.plot(-ax2, data[mirror_index,:],'--'+color)
 
     # add colorbar
-    fig.colorbar(im, orientation='horizontal', extend='both', ticks=np.linspace(vmin, vmax, 5), shrink=0.7)
+    fig.colorbar(im, orientation='horizontal',
+                 extend='both', ticks=np.linspace(vmin, vmax, 5),
+                 shrink=0.7)
     if lut.desc is not None:
         ax_polar.set_title(lut.desc, weight='bold', position=(0.05,0.97))
 
@@ -1689,10 +1691,7 @@ class MLUT(object):
 
     def rm_lut(self, name):
         ''' remove a LUT '''
-        try:
-            assert isinstance(name, basestring)
-        except NameError: # must be python 3
-            assert isinstance(name, (str, bytes))
+        assert isinstance(name, (str, bytes))
 
         try:
             index = [x[0] for x in self.data].index(name)
