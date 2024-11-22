@@ -4,6 +4,7 @@
 
 import os
 import tempfile
+import warnings
 
 import numpy as np
 import pytest
@@ -252,14 +253,14 @@ def test_indexing1(t0, t1, t2, t3):
 
 def test_axis():
     m = create_mlut()
-    assert np.alltrue(m.axis('a') == m.axes['a'])
-    assert np.alltrue(m.axis('a', aslut=True)[:] == m.axes['a'])
+    assert np.all(m.axis('a') == m.axes['a'])
+    assert np.all(m.axis('a', aslut=True)[:] == m.axes['a'])
 
     l = create_lut()
-    assert np.alltrue(l.axis('z') == l.axes[0])
-    assert np.alltrue(l.axis(0) == l.axes[0])
-    assert np.alltrue(l.axis('z', aslut=True)[:] == l.axes[0])
-    assert np.alltrue(l.axis(0, aslut=True)[:] == l.axes[0])
+    assert np.all(l.axis('z') == l.axes[0])
+    assert np.all(l.axis(0) == l.axes[0])
+    assert np.all(l.axis('z', aslut=True)[:] == l.axes[0])
+    assert np.all(l.axis(0, aslut=True)[:] == l.axes[0])
 
 def test_dropaxis():
     m = MLUT()
@@ -343,7 +344,7 @@ def test_idx6():
         Idx(np.eye(2)).index(np.linspace(1, 5, 5))
 
 def test_idx7():
-    r = Idx(np.eye(2), fill_value=np.NaN).index(np.linspace(2, 5, 5))
+    r = Idx(np.eye(2), fill_value=np.nan).index(np.linspace(2, 5, 5))
     assert np.isnan(r).all()
 
 def test_idx8():
@@ -352,12 +353,12 @@ def test_idx8():
     assert (idx.apply(np.arange(10)+100) >= 100).all()
 
 def test_idx_oob_1():
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         assert Idx(-1, fill_value='extrema').index(np.arange(10)) == 0.
         assert Idx(100, fill_value='extrema').index(np.arange(10)) == 9.
-        assert len(record) == 0
 
-    with pytest.warns(None) as record:
+    with pytest.warns() as record:
         assert Idx(-1, fill_value='extrema,warn').index(np.arange(10)) == 0.
         assert Idx(100, fill_value='extrema,warn').index(np.arange(10)) == 9.
         assert len(record) == 2
