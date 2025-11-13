@@ -1,9 +1,29 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=42"]
+
 [project]
-authors = [{name = "François Steinmetz", email = "fs@hygeos.com"}]
 name = "luts"
+version = "1.0.4"
 description = "Multidimensional labeled arrays and datasets in Python, similar to xarray."
+authors = [
+    {name = "François Steinmetz", email = "fs@hygeos.com"},
+    {name = "Mustapha Moulana", email = "mm@hygeos.com"}
+    ]
+readme = "README.md"
+classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'License :: OSI Approved :: Apache Software License',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: Developers',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Programming Language :: Python :: 3.13',
+    'Topic :: Scientific/Engineering'
+]
 requires-python = ">= 3.10"
-version = "1.0.3"
 dependencies = [
     "numpy",
     "scipy",
@@ -12,13 +32,13 @@ dependencies = [
     "pyhdf",
 ]
 
-[build-system]
-requires = ["setuptools>=42"]
-build-backend = "setuptools.build_meta"
+[project.urls]
+Source = "https://github.com/hygeos/luts"
 
 [tool.setuptools]
 packages = ["luts"]  # Explicitly specify your package
 
+# **** pixi configuration ****
 [tool.pixi.project]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
