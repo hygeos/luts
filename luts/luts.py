@@ -1728,6 +1728,8 @@ class MLUT(object):
              or None (determine from filename extension)
         '''
 
+        filename = Path(filename)
+
         if exists(filename):
             if overwrite:
                 remove(filename)
@@ -1740,9 +1742,9 @@ class MLUT(object):
             print('Writing "{}" to "{}" ({} format)'.format(self, filename, fmt))
 
         if fmt is None:
-            if filename.endswith('.hdf'):
+            if filename.suffix == '.hdf':
                 fmt = 'hdf4'
-            elif filename.endswith('.nc'):
+            elif filename.suffix == '.nc':
                 fmt = 'netcdf4'
             else:
                 raise ValueError('Cannot determine desired format '
