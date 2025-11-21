@@ -36,6 +36,8 @@ $ # using a directory
 $ pip install luts/ # or in editable mode: `pip install -e luts/`
 ```
 
+Note: installing with pip requires to have hdf4 and hdf5 to be installed on your system.
+
 ## Testing
 
     $ pytest tests
