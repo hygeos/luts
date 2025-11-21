@@ -39,7 +39,7 @@ Source = "https://github.com/hygeos/luts"
 packages = ["luts"]  # Explicitly specify your package
 
 # **** pixi configuration ****
-[tool.pixi.project]
+[tool.pixi.workspace]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
@@ -52,3 +52,4 @@ luts = { path = ".", editable = true }
 [tool.pixi.dependencies]
 ipykernel = "*"
 pytest = "*"
+pyhdf = "*"
