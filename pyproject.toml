@@ -4,7 +4,7 @@ requires = ["setuptools>=42"]
 
 [project]
 name = "luts"
-version = "1.0.4"
+version = "1.0.5"
 description = "Multidimensional labeled arrays and datasets in Python, similar to xarray."
 authors = [
     {name = "François Steinmetz", email = "fs@hygeos.com"},
