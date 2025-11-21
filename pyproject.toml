@@ -52,4 +52,5 @@ luts = { path = ".", editable = true }
 [tool.pixi.dependencies]
 ipykernel = "*"
 pytest = "*"
-pyhdf = "*"
+hdf4 = "*"
+hdf5 = "*"
