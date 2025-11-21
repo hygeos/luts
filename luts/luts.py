@@ -25,6 +25,7 @@ from collections import OrderedDict
 from numpy.ma import filled
 import warnings
 import itertools
+from pathlib import Path
 if sys.version_info[:2] >= (3, 0): # python2/3 compatibility
     unicode = str
     xrange = range
@@ -2257,14 +2258,18 @@ def read_mlut(filename, fmt=None):
     fmt: netcdf4, hdf4
          or None (determine format from extension)
     '''
+    filename = Path(filename)
+
     if fmt is None:
-        if filename.endswith('.hdf'):
+        if filename.suffix == '.hdf':
             fmt = 'hdf4'
-        elif filename.endswith('.nc'):
+        elif filename.suffix == '.nc':
             fmt = 'netcdf4'
+        elif filename.suffix == '.hdf5':
+            fmt = 'hdf5'
         else:
             raise ValueError('Cannot determine desired format '
-                    'of filename "{}"'.format(filename))
+                             'of filename "{}"'.format(filename))
 
     if fmt=='netcdf4':
         return read_mlut_netcdf4(filename)
